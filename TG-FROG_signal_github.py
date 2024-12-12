@@ -52,8 +52,7 @@ def plot_spectral_intensity_and_phase(omega, E_omega):
     # Filtrage et normalisation de l'intensité
     valid_mask = (wavelength >= 780) & (wavelength <= 820) & mask
     wavelength = wavelength[valid_mask]
-    intensity = intensity[valid_mask]
-    #intensity = intensity[valid_mask] / np.max(intensity[valid_mask])
+    intensity = intensity[valid_mask] / np.max(intensity[valid_mask])
     phase = phase[valid_mask] - np.mean(phase[valid_mask])
     
     # Création de la figure avec deux axes y partageant le même axe x
@@ -143,60 +142,52 @@ def tg_frog(E1_t, E2_t, E3_t, t, tau, omega):
     return signal_t_tau
 
 #%% Étape 4: Résultats
-"""def plot_frog_trace(signal_t_tau, t, tau, title="Trace FROG"):
-    
-    intensity = np.abs(signal_t_tau)**2
-    
-    t_mask = (t >= -100) & (t <= 100)
-    intensity_plot = intensity[t_mask, :]
-    t_plot = t[t_mask]
-    
-    # Normalisation
-    intensity_plot = intensity_plot / np.max(intensity_plot) 
-    
-    plt.figure(figsize=(10, 6))
-    plt.pcolormesh(tau, t_plot, intensity_plot, 
-                   shading='auto', cmap='jet', vmin=0, vmax=1)
-    plt.colorbar(label='Intensité normalisée')
-    plt.xlabel('Délai τ (fs)')
-    plt.ylabel('Temps t (fs)')
-    plt.title(title)
-    plt.tight_layout()
-    plt.show()
-    
-"""
+
 def plot_frog_trace(signal_t_tau, t, tau, omega, title="Trace FROG"):
     """
     Trace la FROG en fonction du délai tau et de la longueur d'onde.
     """
-    c = 3e8  # Vitesse de la lumière (m/s)
-    wavelength = 2 * np.pi * c / (omega * 1e-15 * 1e9)  # Conversion en nm
-
-    # Masque pour les longueurs d'onde valides (par exemple 780 nm à 820 nm)
-    valid_mask = (wavelength >= 780) & (wavelength <= 820)
-    wavelength = wavelength[valid_mask]
-
-    # Extraction du signal FROG pour les longueurs d'onde valides
-    intensity = np.abs(signal_t_tau)**2
-    intensity = intensity[valid_mask, :]  # Application du masque
-
+    # Calcul du spectrogramme
+    signal_freq_tau = fftshift(fft(signal_t_tau, axis=0), axes=0)
+    intensity = np.abs(signal_freq_tau)**2
+    
+    # Calcul correct des longueurs d'onde avec gestion de la division par zéro
+    c = 3e8  # m/s
+    freq = omega * 1e15  # Conversion en Hz
+    
+    # Créer un masque pour éviter la division par zéro
+    nonzero_mask = freq != 0
+    wavelength = np.zeros_like(freq)  # Initialiser avec des zéros
+    wavelength[nonzero_mask] = 2 * np.pi * c / freq[nonzero_mask] * 1e9  # Conversion en nm
+    
+    # Filtrer les valeurs non physiques
+    valid_mask = (wavelength > 0) & (wavelength >= 700) & (wavelength <= 900)
+    wavelength_plot = wavelength[valid_mask]
+    intensity_plot = intensity[valid_mask, :]
+    
+    if len(wavelength_plot) == 0:
+        print("Erreur: Aucune donnée dans la plage de longueurs d'onde spécifiée")
+        print(f"Plage de longueurs d'onde calculée: {np.min(wavelength)} - {np.max(wavelength)} nm")
+        return
+    
     # Normalisation
-    max_intensity = np.max(intensity)
-    if max_intensity > 0:
-        intensity = intensity / max_intensity
-
+    intensity_plot = intensity_plot / np.max(intensity_plot)
+    
+    # Tri pour assurer la monotonie
+    sort_idx = np.argsort(wavelength_plot)
+    wavelength_plot = wavelength_plot[sort_idx]
+    intensity_plot = intensity_plot[sort_idx, :]
+    
     # Tracé du graphe
     plt.figure(figsize=(10, 6))
-    plt.pcolormesh(tau, wavelength, intensity, shading='auto', cmap='jet')
+    plt.pcolormesh(tau, wavelength_plot, intensity_plot, 
+                   shading='auto', cmap='jet')
     plt.colorbar(label="Intensité normalisée")
     plt.xlabel("Délai τ (fs)")
     plt.ylabel("Longueur d'onde (nm)")
     plt.title(title)
     plt.tight_layout()
     plt.show()
-
-
-
 
 #%% Fonction pour les paramètres de la simulation    
     
@@ -213,10 +204,10 @@ def main():
     dw = 2 * np.pi/ (N * dt)
     omega = dw * (np.arange(N) - N/2)
     
-    # Création d'une plage de fréquences centrée autour de omega_0
+    # Largeur spectrale 
     delta_lambda = 40e-9  # m 
-    delta_omega = 2 * np.pi * c * delta_lambda/ (lambda_0**2) * 1e-15
-    sigma_omega = delta_omega / 2.335
+    delta_omega_width = 2 * np.pi * c * delta_lambda/ (lambda_0**2) * 1e-15
+    sigma_omega = delta_omega_width / 2.335
     
     # Définition des paramètres du pulse initial
     phi = {0: 0, 1: 0, 2: 500}  # Coefficients de phase phi0: rad, phi1: s, phi2: s^2
@@ -229,9 +220,10 @@ def main():
     
     E1_t, E2_t, E3_t, E1_omega, E2_omega, E3_omega = generate_three_fields(omega, E_omega, omega_0)
     
-    tau = np.linspace(-20, 20, 200) # fs
+    tau = np.linspace(-100, 100, 200) # fs
     signal_t_tau = tg_frog(E1_t, E2_t, E3_t, t, tau, omega)
     plot_frog_trace(signal_t_tau, t, tau, omega)
+    
 
 if __name__ == "__main__":
     main()
