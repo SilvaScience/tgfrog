@@ -35,7 +35,7 @@ def generate_gaussian_pulse(omega, omega_0, phi_coeff, sigma_omega):
 
 # Graphique de l'intensité spectral en fonction de la phase
 
-def plot_spectral_intensity_and_phase(omega, E_omega):
+def plot_spectral_intensity_and_phase(omega, E_omega, title=""):
     """
     Visualise l'intensité spectrale et la phase du pulse sur le même graphique
     en fonction de la longueur d'onde
@@ -62,49 +62,54 @@ def plot_spectral_intensity_and_phase(omega, E_omega):
     
     # Plot de l'intensité sur l'axe gauche
     ax1.plot(wavelength, intensity, 'b-', linewidth=2, label='Intensité')
-    ax1.set_xlabel('Longueur d\'onde (nm)')
-    ax1.set_ylabel('Intensité normalisée')
+    ax1.set_xlabel('Longueur d\'onde (nm)', fontsize=14)
+    ax1.set_ylabel('Intensité normalisée', fontsize=14)
     
     # Plot de la phase sur l'axe droit
     ax2.plot(wavelength, phase, 'r--', linewidth=2, label='Phase')
-    ax2.set_ylabel('Phase (rad)')
+    ax2.set_ylabel('Phase (rad)', fontsize=14)
     
     # Configuration des limites et grille
     ax1.set_xlim(750, 850)
     ax1.set_ylim(0, 1.1)
     ax2.set_ylim(-5, 5)
+    ax1.grid(True, axis='x')
+    ax2.grid(True, axis='y')
+    ax1.tick_params(axis='both', labelsize=12)
+    ax2.tick_params(axis='y', labelsize=12)
     
     # Ajout des légendes
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
-
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize=14)
     
-    plt.title('Intensité spectrale et phase')
-    plt.grid(True)
+    plt.title(title, fontsize=14)
+    plt.tight_layout()
+    #plt.savefig('Intensité_spectrale.pdf')
     plt.show()
     
 
 
 #%% Étape 2 : Génération des trois champs
-def generate_three_fields(omega, E_omega, omega_0):
+def generate_three_fields(omega, E_omega, omega_0, chirps):
     """
     Création de trois champs avec différentes phases spectrales
     """
-    # Définition des chirps (tous à 0 dans cette version, possible de modifier)
-    phi2_1 = 0 #fs^2
-    phi2_2 = 0 #fs^2
-    phi2_3 = 0 #fs^2
+    # Définition des chirps 
+    phi2_1, phi2_2, phi2_3 = chirps #fs^s
+    delta_omega = omega - omega_0
     
-    # Normalisation des fréquences pour éviter l'overflow
-    delta_omega = omega - omega_0   # rad/fs
-    delta_omega_norm = delta_omega * 1e-1  # Réduction de l'échelle
+    # Champs dans l'espace des phases
+    E1_omega = E_omega * np.exp(1j * 0.5 * phi2_1 * delta_omega**2)
+    E2_omega = E_omega * np.exp(1j * 0.5 * phi2_2 * delta_omega**2)
+    E3_omega = E_omega * np.exp(1j * 0.5 * phi2_3 * delta_omega**2)
     
-    E1_omega = E_omega * np.exp(1j * 0.5 * phi2_1 * delta_omega_norm**2)
-    E2_omega = E_omega * np.exp(1j * 0.5 * phi2_2 * delta_omega_norm**2)
-    E3_omega = E_omega * np.exp(1j * 0.5 * phi2_3 * delta_omega_norm**2)
+    # Visualisation des trois champs
+    plot_spectral_intensity_and_phase(omega, E1_omega, f"Champ 1, chirps:{phi2_1} fs^2")
+    plot_spectral_intensity_and_phase(omega, E2_omega, f"Champ 2, chirps:{phi2_2} fs^2")
+    plot_spectral_intensity_and_phase(omega, E3_omega, f"Champ 3, chirps:{phi2_3} fs^2")
     
-    # Champ dans l'espace des phases
+    # Champ dans l'espace temporelles
     E1_t = ifft(ifftshift(E1_omega))
     E2_t = ifft(ifftshift(E2_omega))
     E3_t = ifft(ifftshift(E3_omega))
@@ -135,7 +140,7 @@ def tg_frog(E1_t, E2_t, E3_t, t, tau, omega):
 
 #%% Étape 4: Résultats
 
-def plot_frog_trace(signal_t_tau, t, tau, omega, title="Trace FROG"):
+def plot_frog_trace(signal_t_tau, t, tau, omega, title=""):
     """
     Trace la FROG en fonction du délai tau et de la longueur d'onde.
     """
@@ -143,13 +148,13 @@ def plot_frog_trace(signal_t_tau, t, tau, omega, title="Trace FROG"):
     signal_freq_tau = fftshift(fft(signal_t_tau, axis=0), axes=0)
     intensity = np.abs(signal_freq_tau)**2
     
-    # Calcul correct des longueurs d'onde avec gestion de la division par zéro
+    # Calcul correct des longueurs d'onde
     c = 3e8  # m/s
     freq = omega * 1e15  # Conversion en Hz
     
     # Créer un masque pour éviter la division par zéro
     nonzero_mask = freq != 0
-    wavelength = np.zeros_like(freq)  # Initialiser avec des zéros
+    wavelength = np.zeros_like(freq)  
     wavelength[nonzero_mask] = 2 * np.pi * c / freq[nonzero_mask] * 1e9  # Conversion en nm
     
     # Filtrer les valeurs non physiques entre 700-900 nm
@@ -160,26 +165,27 @@ def plot_frog_trace(signal_t_tau, t, tau, omega, title="Trace FROG"):
     # vérification des données pour s'assurer que la plage choisie contient des données
     if len(wavelength_plot) == 0:
         print("Erreur: Aucune donnée dans la plage de longueurs d'onde spécifiée")
-        print(f"Plage de longueurs d'onde calculée: {np.min(wavelength)} - {np.max(wavelength)} nm")
         return
     
     # Normalisation
     intensity_plot = intensity_plot / np.max(intensity_plot)
-    
-    # Tri pour assurer la monotonie
     sort_idx = np.argsort(wavelength_plot)
     wavelength_plot = wavelength_plot[sort_idx]
     intensity_plot = intensity_plot[sort_idx, :]
     
 
     plt.figure(figsize=(10, 6))
-    plt.pcolormesh(tau, wavelength_plot, intensity_plot, 
+    plot = plt.pcolormesh(tau, wavelength_plot, intensity_plot, 
                    shading='auto', cmap='jet')
-    plt.colorbar(label="Intensité normalisée")
-    plt.xlabel("Délai τ (fs)")
-    plt.ylabel("Longueur d'onde (nm)")
-    plt.title(title)
+    cbar = plt.colorbar(plot)
+    cbar.ax.tick_params(labelsize=10)
+    cbar.set_label("Intensité normalisée", size=14, labelpad=12)
+    plt.xlabel("Délai τ (fs)", fontsize=14)
+    plt.ylabel("Longueur d'onde (nm)", fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     plt.tight_layout()
+    plt.savefig('Trace_FROG.pdf')
     plt.show()
 
 #%% Fonction pour les paramètres de la simulation    
@@ -196,7 +202,7 @@ def main():
     omega_0 = 2 * np.pi * c / lambda_0 * 1e-15 # rad/fs
     
     # Calcul de l'axe des fréquences
-    dw = 2 * np.pi/ (N * dt)    # rad/fs
+    dw = 2 * np.pi / (N * dt)    # rad/fs
     omega = dw * (np.arange(N) - N/2)   #rad/fs
     
     # Largeur spectrale 
@@ -204,20 +210,28 @@ def main():
     delta_omega_width = 2 * np.pi * c * delta_lambda/ (lambda_0**2) * 1e-15 # rad/fs
     sigma_omega = delta_omega_width / 2.335 # rad/fs 
     
-    # Définition des paramètres du pulse initial
-    phi = {0: 0, 1: 0, 2: 500}  # Coefficients de phase phi0: rad, phi1: fs, phi2: fs^2
+    # Test de différents chirps
+    chirp_configuration = [
+        (0, 0, 0),          # Sans chirps
+        (300, 300, 300),    # Chirps positifs et égaux
+        (-300, -300, -300), # Chirps négatifs et égaux
+        (300, -300, 0),     # Chirps différents
+    ]
     
-    # Génération du pulse
-    E_omega = generate_gaussian_pulse(omega, omega_0, phi, sigma_omega)
-    
-    # Visualisation
-    plot_spectral_intensity_and_phase(omega, E_omega)
-    
-    E1_t, E2_t, E3_t, E1_omega, E2_omega, E3_omega = generate_three_fields(omega, E_omega, omega_0)
-    
-    tau = np.linspace(-200, 200, 400) # fs
-    signal_t_tau = tg_frog(E1_t, E2_t, E3_t, t, tau, omega)
-    plot_frog_trace(signal_t_tau, t, tau, omega)
+    for chirps in chirp_configuration:
+        # Définition des paramètres du pulse initial
+        phi = {0: 0, 1: 0, 2: 500}  # Coefficients de phase phi0: rad, phi1: fs, phi2: fs^2
+        # Génération du pulse
+        E_omega = generate_gaussian_pulse(omega, omega_0, phi, sigma_omega)
+        
+        E1_t, E2_t, E3_t, E1_omega, E2_omega, E3_omega = generate_three_fields(omega, E_omega, omega_0, chirps)
+        
+        tau = np.linspace(-200, 200, 400) # fs
+        signal_t_tau = tg_frog(E1_t, E2_t, E3_t, t, tau, omega)
+        
+        title = f"TRace FROG - chirps: phi2_1={chirps[0]}. phi2_2={chirps[1]}, phi2_3={chirps[2]}"
+        plot_frog_trace(signal_t_tau, t, tau, omega, title)
+
     
 
 if __name__ == "__main__":
