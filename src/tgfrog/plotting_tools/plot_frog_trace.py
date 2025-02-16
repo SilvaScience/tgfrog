@@ -38,7 +38,7 @@ def plot_frog_trace(
         f"Got {signal_t_tau.shape} and {omega.shape}."
     )
 
-    assert signal_t_tau.shape[1] == omega.shape[1], (
+    assert signal_t_tau.shape[1] == tau.shape[0], (
         "Input signal second dimension should match time delays."
         f"Got {signal_t_tau.shape} and {tau.shape}."
     )
@@ -81,6 +81,8 @@ def plot_frog_trace(
     plt.ylabel("Wavelength (nm)", fontsize=14)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
+    plt.xlim(tau.min() - 0.1, tau.max() + 0.1)
+    plt.ylim((SPECTRUM_RANGE[0] - spectrum_window, SPECTRUM_RANGE[1] + spectrum_window))
     plt.tight_layout()
 
     if output_path is not None:

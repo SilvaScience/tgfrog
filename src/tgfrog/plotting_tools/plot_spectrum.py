@@ -95,7 +95,7 @@ def plot_signal_spectrum(
         r" fs$^2$"
     )
     plt.title(f"Combined signal E1 x E2* × E3 - {chirp_text}", fontsize=14)
-    plt.tight_layout()
+    # plt.tight_layout()
     if output_path is not None:
         plt.savefig(output_path)
     else:
