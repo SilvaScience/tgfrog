@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from tgfrog.plotting_tools import PLEASANT_FIG_SIZE, PLOT_STYLE_PATH
-from tgfrog.utils.constants import (SPEED_OF_LIGHT, TWOPI,
-                                    VISIBLE_SPECTRUM_RANGE)
+from tgfrog.utils.constants import (METER_TO_NANOMETER, OMEGA_TO_HERTZ,
+                                    SPECTRUM_RANGE, SPEED_OF_LIGHT, TWOPI)
 
 plt.style.use(PLOT_STYLE_PATH)
 WAVELENGTH_CUTOFF = 1e-10
@@ -27,7 +27,7 @@ def plot_signal_spectrum(
         e2_omega: second electric field as a function of omega with complex values. Should be of size (num_freq,)
         e3_omega: third electric field as a function of omega with complex values. Should be of size (num_freq,)
         chirps: parameters describing the chirps in fs^2. Defaults to (0, 0, 0)
-        output_path: path where to save the file. If None, do not save the figure. Defaults to None.
+        output_path (optional): path where to save the file. If None, do not save the figure. Defaults to None.
     """
     assert omega.shape == e1_omega.shape, (
         "Electric field dimension should match input frequencies."
@@ -54,12 +54,12 @@ def plot_signal_spectrum(
     # convert omega frequencies in wavelength
     mask = np.abs(omega) > WAVELENGTH_CUTOFF
     wavelength = np.zeros_like(omega)
-    wavelength[mask] = TWOPI * SPEED_OF_LIGHT * 1e-6 / omega[mask]
+    wavelength[mask] = (
+        TWOPI * SPEED_OF_LIGHT * METER_TO_NANOMETER / (omega[mask] * OMEGA_TO_HERTZ)
+    )
 
     valid_mask = (
-        (wavelength >= VISIBLE_SPECTRUM_RANGE[0])
-        & (wavelength <= VISIBLE_SPECTRUM_RANGE[1])
-        & mask
+        (wavelength >= SPECTRUM_RANGE[0]) & (wavelength <= SPECTRUM_RANGE[1]) & mask
     )
     wavelength = wavelength[valid_mask]
     intensity = intensity[valid_mask] / np.max(intensity[valid_mask])
@@ -76,7 +76,7 @@ def plot_signal_spectrum(
     ax2.plot(wavelength, phase, "r--", linewidth=2, label="Phase")
     ax2.set_ylabel("Phase (rad)", fontsize=14)
 
-    ax1.set_xlim(*VISIBLE_SPECTRUM_RANGE)
+    ax1.set_xlim(*SPECTRUM_RANGE)
     ax1.set_ylim(0, 1.1)
     ax2.set_ylim(-5, 5)
     ax1.grid(True, alpha=0.3)
