@@ -83,7 +83,7 @@ def plot_signal_spectrum(
 
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper right", fontsize=12)
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper right")
 
     chirp_text = (
         r"$\phi_{12}$="
@@ -94,8 +94,7 @@ def plot_signal_spectrum(
         f"{chirps[2]}"
         r" fs$^2$"
     )
-    plt.title(f"Combined signal E1 x E2* × E3 - {chirp_text}", fontsize=14)
-    # plt.tight_layout()
+    plt.title(f"Combined signal E1 x E2* × E3 - {chirp_text}")
     if output_path is not None:
         plt.savefig(output_path)
     else:
