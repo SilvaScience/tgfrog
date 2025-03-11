@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from tgfrog.plotting_tools import PLEASANT_FIG_SIZE, PLOT_STYLE_PATH
-from tgfrog.utils.constants import (METER_TO_NANOMETER, OMEGA_TO_HERTZ,
+from tgfrog.utils.constants import (METER_TO_NANOMETER, SECOND_TO_FEMTOSECOND,
                                     SPECTRUM_RANGE, SPEED_OF_LIGHT, TWOPI)
 
 plt.style.use(PLOT_STYLE_PATH)
@@ -55,7 +55,7 @@ def plot_signal_spectrum(
     mask = np.abs(omega) > WAVELENGTH_CUTOFF
     wavelength = np.zeros_like(omega)
     wavelength[mask] = (
-        TWOPI * SPEED_OF_LIGHT * METER_TO_NANOMETER / (omega[mask] * OMEGA_TO_HERTZ)
+        TWOPI * SPEED_OF_LIGHT * METER_TO_NANOMETER / (omega[mask] * SECOND_TO_FEMTOSECOND)
     )
 
     valid_mask = (

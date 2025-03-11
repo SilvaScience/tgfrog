@@ -2,12 +2,12 @@ from typing import Tuple
 
 import numpy as np
 
-from tgfrog.utils.constants import (METER_TO_NANOMETER, OMEGA_TO_HERTZ,
+from tgfrog.utils.constants import (METER_TO_NANOMETER, SECOND_TO_FEMTOSECOND,
                                     SPECTRUM_RANGE, SPEED_OF_LIGHT, TWOPI)
 
 
 def omega_fs_to_hertz(omega: np.ndarray) -> np.ndarray:
-    """Convert a signal frequency :math:`\omega` in 1 / fs to a frequency in Hz.
+    r"""Convert a signal frequency :math:`\omega` in 1 / fs to a frequency in Hz.
 
     Args:
         omega: array of frequencies in :math:`fs^{-1}`
@@ -15,7 +15,7 @@ def omega_fs_to_hertz(omega: np.ndarray) -> np.ndarray:
     Returns:
         frequencies in Hz
     """
-    freq = omega * OMEGA_TO_HERTZ  # convert to Hz
+    freq = omega * SECOND_TO_FEMTOSECOND  # convert to Hz
     return freq
 
 
@@ -83,7 +83,7 @@ def normalization_and_sort_spectrogram(
         spectrogram: values in the spectrum range
     """
     # Normalization
-    spectrogram = spectrogram / max(np.max(spectrogram), 1e-5)
+    spectrogram = spectrogram / max(np.max(spectrogram), 1e-10)
     sort_idx = np.argsort(wavelength)
     wavelength = wavelength[sort_idx]
     spectrogram = spectrogram[sort_idx, :]

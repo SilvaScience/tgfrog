@@ -1,8 +1,9 @@
-from typing import List, Tuple
+from typing import Any, AnyStr, Dict, List, Tuple
 
 import numpy as np
 from scipy.fftpack import ifft, ifftshift
 
+from tgfrog.signal_processing.spectrogram import compute_spectrogram_from_time_signal, process_spectrogram
 from tgfrog.utils.constants import (NANOMETER_TO_METER, SECOND_TO_FEMTOSECOND,
                                     SPEED_OF_LIGHT, TWOPI)
 
@@ -95,6 +96,38 @@ class FROG_simulator:
             signal_t_tau[:, i] = e_fields[0] * np.conj(delayed_e2) * e_fields[2]
 
         return signal_t_tau
+
+    def compute_spectrogram(
+        self,
+        phi_taylor_coefficient: List[float],
+        chirp_1: float,
+        chirp_2: float,
+        chirp_3: float,
+        tau: np.array,
+        padding: float = 50.0,
+    ) -> Tuple[np.ndarray, np.array]:
+        signal_t_tau = self.compute_tg_frog(phi_taylor_coefficient, chirp_1, chirp_2, chirp_3, tau)
+        _, spectrogram = compute_spectrogram_from_time_signal(signal_t_tau)
+        filtered_spectrogram, filtered_wavelength = process_spectrogram(spectrogram, self.omega, padding)
+        return filtered_spectrogram, filtered_wavelength
+
+
+def get_spectrogram_from_parameters(
+    parameters: Dict[AnyStr, Any]
+) -> Tuple[np.ndarray, np.array]:
+    frog_simulator = FROG_simulator(
+        n=parameters["n_time_step"],
+        dt=parameters["time_delta"],
+        lambda_0=parameters["lambda_zero"],
+        delta_lambda=parameters["delta_lambda"]
+    )
+    spectrogram, wavelength = frog_simulator.compute_spectrogram(
+        parameters["phase_coefficients"],
+        *parameters["chirps"],
+        tau=parameters["tau_values"],
+        padding=50  # default values
+    )
+    return spectrogram, wavelength
 
 
 def main():

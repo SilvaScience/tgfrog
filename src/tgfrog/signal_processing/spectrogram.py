@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Any, AnyStr, Dict, Tuple
 
 import numpy as np
 from scipy.fftpack import fft, fftshift
@@ -55,3 +55,5 @@ def process_spectrogram(
         wavelength, spectrogram
     )
     return spectrogram, wavelength
+
+
