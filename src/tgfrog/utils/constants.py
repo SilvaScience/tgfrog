@@ -1,0 +1,10 @@
+import numpy as np
+
+SPEED_OF_LIGHT = 3e8  # in m/s
+TWOPI = 2 * np.pi
+
+SPECTRUM_RANGE = (750, 850)
+
+SECOND_TO_FEMTOSECOND = 1e15
+METER_TO_NANOMETER = 1e9
+NANOMETER_TO_METER = 1e-9

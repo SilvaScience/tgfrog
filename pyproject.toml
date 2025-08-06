@@ -1,0 +1,37 @@
+[project]
+name = "tgfrog"
+version = "0.1.0"
+description = "Tool kit for TG-FROG analysis."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    {name = "Isabella Moreno", email = "isabella.moreno@umontreal.ca"},
+    {name = "Felix Thouin", email = "felix.thouin@umontreal.ca"},
+    {name = "Simon Blackburn", email = "simon.blackburn@mila.quebec"},
+    {name = "Bruno Rousseau", email = "rousseau.bruno@mila.quebec"},
+]
+dependencies = [
+    "black>=24.10.0",
+    "flake8-docstrings==1.6.0",
+    "flake8==4.0.1",
+    "gitpython==3.1.27",
+    "isort==5.13.2",
+    "matplotlib==3.10.0",
+    "numpy==2.2.3",
+    "pip>=24.2",
+    "scipy==1.15.1",
+    "sphinx-autoapi==3.0.0",
+    "sphinx-rtd-theme==2.0.0",
+    "sphinx==7.2.6",
+    "sphinxcontrib-katex==0.8.6",
+    "sphinxcontrib-napoleon==0.7",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests/"]
+norecursedirs = "__pycache__"
+markers = ["slow", "not_on_github"]
